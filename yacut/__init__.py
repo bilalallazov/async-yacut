@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from yacut.constants import SHORT_ID_GENERATION_ATTEMPTS
+
 load_dotenv()
 
 db = SQLAlchemy()
@@ -17,6 +19,12 @@ def create_app():
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DISK_TOKEN'] = os.getenv('DISK_TOKEN')
+    app.config['SHORT_ID_GENERATION_ATTEMPTS'] = int(
+        os.getenv(
+            'SHORT_ID_GENERATION_ATTEMPTS',
+            SHORT_ID_GENERATION_ATTEMPTS
+        )
+    )
 
     db.init_app(app)
 

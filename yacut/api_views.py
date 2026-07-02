@@ -1,59 +1,35 @@
+from http import HTTPStatus
+
 from flask import Blueprint, jsonify, request
 
-from yacut import db
+from yacut.exceptions import InvalidAPIUsage, ShortIDNotFound
 from yacut.models import URLMap
-from yacut.utils import (
-    DUPLICATE_MSG,
-    RESERVED_SHORT_IDS,
-    get_short_link,
-    get_unique_short_id,
-    is_valid_custom_id,
-)
+from yacut.utils import get_short_link
+from yacut.validators import validate_request_body
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 @bp.route('/id/', methods=['POST'])
 def create_short_link():
-    if not request.data:
-        return jsonify({'message': 'Отсутствует тело запроса'}), 400
-
     data = request.get_json(silent=True)
-    if data is None:
-        return jsonify({'message': 'Отсутствует тело запроса'}), 400
+    try:
+        validate_request_body(data)
+        url_map = URLMap.create(data['url'], data.get('custom_id'))
+    except InvalidAPIUsage as error:
+        return jsonify({'message': error.message}), error.status_code
 
-    if 'url' not in data:
-        return jsonify({'message': '"url" является обязательным полем!'}), 400
-
-    url = data['url']
-    custom_id = data.get('custom_id')
-
-    if custom_id:
-        if not is_valid_custom_id(custom_id):
-            return jsonify({
-                'message': 'Указано недопустимое имя для короткой ссылки'
-            }), 400
-        if custom_id in RESERVED_SHORT_IDS:
-            return jsonify({'message': DUPLICATE_MSG}), 400
-        if URLMap.query.filter_by(short=custom_id).first():
-            return jsonify({'message': DUPLICATE_MSG}), 400
-        short_id = custom_id
-    else:
-        short_id = get_unique_short_id()
-
-    url_map = URLMap(original=url, short=short_id)
-    db.session.add(url_map)
-    db.session.commit()
-
-    return jsonify({
-        'url': url,
-        'short_link': get_short_link(short_id),
-    }), 201
+    return jsonify(
+        {'url': url_map.original, 'short_link': get_short_link(url_map.short)}
+    ), HTTPStatus.CREATED
 
 
 @bp.route('/id/<short_id>/', methods=['GET'])
 def get_original_link(short_id):
-    url_map = URLMap.query.filter_by(short=short_id).first()
-    if url_map is None:
-        return jsonify({'message': 'Указанный id не найден'}), 404
-    return jsonify({'url': url_map.original}), 200
+    try:
+        url_map = URLMap.get(short_id)
+        if url_map is None:
+            raise ShortIDNotFound('Указанный id не найден')
+    except ShortIDNotFound as error:
+        return jsonify({'message': error.message}), error.status_code
+    return jsonify({'url': url_map.original}), HTTPStatus.OK

@@ -3,8 +3,9 @@ from flask_wtf.file import MultipleFileField
 from wtforms import StringField, URLField
 from wtforms.validators import DataRequired, Length, Optional, ValidationError
 
-from yacut.constants import SHORT_ID_MAX_LENGTH
+from yacut.constants import DUPLICATE_MESSAGE, SHORT_ID_MAX_LENGTH
 from yacut.exceptions import InvalidAPIUsage
+from yacut.models import URLMap
 from yacut.validators import validate_custom_id
 
 
@@ -25,6 +26,8 @@ class URLForm(FlaskForm):
             validate_custom_id(field.data)
         except InvalidAPIUsage as error:
             raise ValidationError(error.message) from error
+        if URLMap.get(field.data):
+            raise ValidationError(DUPLICATE_MESSAGE)
 
 
 class FileUploadForm(FlaskForm):

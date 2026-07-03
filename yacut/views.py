@@ -1,7 +1,6 @@
-import asyncio
-
 from flask import Blueprint, abort, current_app, redirect, render_template
 
+from yacut.async_utils import run_async
 from yacut.exceptions import InvalidAPIUsage
 from yacut.forms import FileUploadForm, URLForm
 from yacut.models import URLMap
@@ -38,7 +37,7 @@ def file_upload_view():
             (file.read(), file.filename)
             for file in form.files.data
         ]
-        download_urls = asyncio.run(upload_files(files_data, token))
+        download_urls = run_async(upload_files(files_data, token))
         for (_, filename), download_url in zip(files_data, download_urls):
             url_map = URLMap.create(download_url)
             uploaded_files.append({

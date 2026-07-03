@@ -33,9 +33,6 @@ def create_app():
     app.register_blueprint(api_views.bp)
     error_handlers.register_error_handlers(app)
 
-    with app.app_context():
-        db.create_all()
-
     return app
 
 

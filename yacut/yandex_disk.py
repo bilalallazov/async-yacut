@@ -5,6 +5,7 @@ import aiohttp
 API_BASE_URL = 'https://cloud-api.yandex.net/v1/disk/resources'
 UPLOAD_LINK_URL = f'{API_BASE_URL}/upload'
 DOWNLOAD_LINK_URL = f'{API_BASE_URL}/download'
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
 
 
 async def _get_upload_link(session, path, token):
@@ -42,7 +43,7 @@ async def upload_file(session, file_data, filename, token):
 
 
 async def upload_files(files_data, token):
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=REQUEST_TIMEOUT) as session:
         tasks = [
             upload_file(session, file_data, filename, token)
             for file_data, filename in files_data

@@ -9,7 +9,6 @@ from yacut.constants import (
     SHORT_ID_MAX_LENGTH,
 )
 from yacut.exceptions import InvalidAPIUsage
-from yacut.models import URLMap
 
 CUSTOM_ID_PATTERN = re.compile(
     rf'^[a-zA-Z0-9]{{1,{SHORT_ID_MAX_LENGTH}}}$'
@@ -30,5 +29,7 @@ def validate_custom_id(custom_id):
         raise InvalidAPIUsage(INVALID_NAME_MESSAGE)
     if custom_id in RESERVED_SHORT_IDS:
         raise InvalidAPIUsage(DUPLICATE_MESSAGE)
+    from yacut.models import URLMap
+
     if URLMap.get(custom_id) is not None:
         raise InvalidAPIUsage(DUPLICATE_MESSAGE)

@@ -3,6 +3,7 @@ from datetime import datetime
 from yacut import db
 from yacut.constants import ORIGINAL_URL_MAX_LENGTH, SHORT_ID_MAX_LENGTH
 from yacut.utils import get_unique_short_id
+from yacut.validators import validate_custom_id
 
 
 class URLMap(db.Model):
@@ -19,8 +20,6 @@ class URLMap(db.Model):
 
     @staticmethod
     def create(original, custom_id=None):
-        from yacut.validators import validate_custom_id
-
         validate_custom_id(custom_id)
         short_id = custom_id or get_unique_short_id(URLMap.get)
         url_map = URLMap(original=original, short=short_id)
